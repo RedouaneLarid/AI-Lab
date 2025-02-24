@@ -16,6 +16,8 @@ class Operator(ABC):
         pass
     def truth_value(self): 
         pass
+    def get_symbols(self):
+        pass
 
 class And(Operator):
     def __init__(self , *statements):
@@ -39,6 +41,15 @@ class And(Operator):
                 return False
 
         return True
+
+    def get_symbols(self):
+        symbols = set()
+        for statement in self.statements:
+            if isinstance(statement , Symbol):
+                symbols.add(statement)
+            else:
+                symbols.update(statement.get_symbols())
+        return symbols
         
     def __str__(self):
         return self.formula()
@@ -65,6 +76,15 @@ class Or(Operator):
                 return True
 
         return False
+
+    def get_symbols(self):
+        symbols = set()
+        for statement in self.statements:
+            if isinstance(statement , Symbol):
+                symbols.add(statement)
+            else:
+                symbols.update(statement.get_symbols())
+        return symbols
         
     def __str__(self):
         return self.formula()
@@ -80,6 +100,14 @@ class Not(Operator):
         if self.statement == None:
             return None
         return not self.statement.state if not isinstance(self.statement , Operator) else not self.statement.truth_value()
+
+    def get_symbols(self):
+        symbols = set()
+        if isinstance(self.statement , Symbol):
+            symbols.add(self.statement)
+        else:
+            symbols.update(self.statement.get_symbols())
+        return symbols
 
     def __str__(self):
         return self.formula()
@@ -97,35 +125,50 @@ class Implicate(Operator):
             return None
         return not (self.s_statement.state if not isinstance(self.s_statement , Operator) else self.s_statement.truth_value()) or (self.r_statement.state if not isinstance(self.r_statement , Operator) else self.r_statement.truth_value())
 
+    def get_symbols(self):
+        symbols = set()
+        if isinstance(self.s_statement , Symbol):
+            symbols.add(self.s_statement)
+        else:
+            symbols.update(self.s_statement.get_symbols())
+
+        if isinstance(self.r_statement , Symbol):
+            symbols.add(self.r_statement)
+        else:
+            symbols.update(self.r_statement.get_symbols())
+        return symbols
+
     def __str__(self):
         return self.formula()
 
 def check_knowlege(knowledge , symbols):
-    combinations = list(product([True , False] , repeat=5))
+    combinations = list(product([True , False] , repeat=len(symbols)))
     valid_worlds = []
 
     for comb in combinations:
         for i in range(len(symbols)):
             symbols[i].state = comb[i]
-        if knowledge.truth_value():
-            print(*symbols , knowledge.truth_value() , comb)
+        for i in range(len(symbols)):
+            if knowledge.truth_value():
+                valid_worlds.append({symbols[i].name : comb[i]})
     return valid_worlds
 
-rain = Symbol("rain" , None , True)
-outside = Symbol("ouside" , None , False)
-die = Symbol("die" , None , False)
-run = Symbol("run" , None , False)
-cook = Symbol("cook" , None , True)
+rain = Symbol("rain" , None , None)
+outside = Symbol("ouside" , None , None)
+die = Symbol("die" , None , None)
+run = Symbol("run" , None , None)
+cook = Symbol("cook" , None , None)
 
 
 kb = And(
-    Implicate(And(outside , rain) , die),
-    Implicate(cook , Not(run)),
-    Or(outside , run),
-    Not(And(outside , run)),
+    Implicate(And(rain , outside) , die),
+    Implicate(run , outside),
     rain,
-    cook,
+    Or(cook , run),
+    Not(And(cook , run)),
+    Not(cook),
 )
 
 
-print(kb.truth_value())
+valid_worlds = check_knowlege(kb , list(kb.get_symbols()))
+print(valid_worlds)
