@@ -1,4 +1,5 @@
 from abc import ABC , abstractmethod
+from itertools import product
 
 class Symbol:
     def __init__(self , name , discription , state):
@@ -28,12 +29,16 @@ class And(Operator):
         return "".join(result)
 
     def truth_value(self):
-        result = self.statements[0].state if not isinstance(self.statements[0] , Operator) else self.statements[0].truth_value()
-        if result == None:
-            return None
-        for i in range(len(self.statements)):
-            result = result and self.statements[i].state if not isinstance(self.statements[i] , Operator) else self.statements[i].truth_value()
-        return result
+        for statement in self.statements:
+            result = statement.state if not isinstance(statement , Operator) else statement.truth_value()
+            
+            if result == None:
+                return None
+            
+            if not result:
+                return False
+
+        return True
         
     def __str__(self):
         return self.formula()
@@ -50,12 +55,16 @@ class Or(Operator):
         return "".join(result)
 
     def truth_value(self):
-        result = self.statements[0].state if not isinstance(self.statements[0] , Operator) else self.statements[0].truth_value()
-        if result == None:
-            return None
-        for i in range(len(self.statements)):
-            result = result or self.statements[i].state if not isinstance(self.statements[i] , Operator) else self.statements[i].truth_value()
-        return result
+        for statement in self.statements:
+            result = statement.state if not isinstance(statement , Operator) else statement.truth_value()
+            
+            if result == None:
+                return None
+            
+            if result:
+                return True
+
+        return False
         
     def __str__(self):
         return self.formula()
@@ -71,6 +80,7 @@ class Not(Operator):
         if self.statement == None:
             return None
         return not self.statement.state if not isinstance(self.statement , Operator) else not self.statement.truth_value()
+
     def __str__(self):
         return self.formula()
 
@@ -86,16 +96,24 @@ class Implicate(Operator):
         if self.s_statement == None or self.r_statement == None:
             return None
         return not (self.s_statement.state if not isinstance(self.s_statement , Operator) else self.s_statement.truth_value()) or (self.r_statement.state if not isinstance(self.r_statement , Operator) else self.r_statement.truth_value())
-        
+
     def __str__(self):
         return self.formula()
 
+def check_knowlege(knowledge , symbols):
+    combinations = list(product([True , False] , repeat=5))
+    valid_worlds = []
 
-
+    for comb in combinations:
+        for i in range(len(symbols)):
+            symbols[i].state = comb[i]
+        if knowledge.truth_value():
+            print(*symbols , knowledge.truth_value() , comb)
+    return valid_worlds
 
 rain = Symbol("rain" , None , True)
-outside = Symbol("ouside" , None , True)
-die = Symbol("die" , None , True)
+outside = Symbol("ouside" , None , False)
+die = Symbol("die" , None , False)
 run = Symbol("run" , None , False)
 cook = Symbol("cook" , None , True)
 
