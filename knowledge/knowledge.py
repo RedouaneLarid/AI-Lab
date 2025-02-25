@@ -141,17 +141,33 @@ class Implicate(Operator):
     def __str__(self):
         return self.formula()
 
-def check_knowlege(knowledge , symbols):
+def check_knowlege(knowledge):
+    symbols = list(knowledge.get_symbols())
     combinations = list(product([True , False] , repeat=len(symbols)))
     valid_worlds = []
 
     for comb in combinations:
+        valid_comb = []
         for i in range(len(symbols)):
             symbols[i].state = comb[i]
-        for i in range(len(symbols)):
-            if knowledge.truth_value():
-                valid_worlds.append({symbols[i].name : comb[i]})
+            valid_comb.append([symbols[i] , comb[i]])
+        
+        if knowledge.truth_value():
+            valid_worlds.append(valid_comb.copy())
+
     return valid_worlds
+    
+def check_query(knowledge , query):
+    valid_worlds = check_knowlege(knowledge)
+    if len(check_knowlege(knowledge)) > 0:
+        for world in valid_worlds:
+            for config in world:
+                config[0].state = config[1]
+            if not knowledge.truth_value():
+                return False
+        return query.state if isinstance(query , Symbol) else query.truth_value()
+    else:
+        raise Exception("The knowledge is not valid")
 
 rain = Symbol("rain" , None , None)
 outside = Symbol("ouside" , None , None)
@@ -166,9 +182,7 @@ kb = And(
     rain,
     Or(cook , run),
     Not(And(cook , run)),
-    Not(cook),
+    Not(cook)
 )
 
-
-valid_worlds = check_knowlege(kb , list(kb.get_symbols()))
-print(valid_worlds)
+print(check_query(kb , die))
