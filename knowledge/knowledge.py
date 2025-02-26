@@ -169,20 +169,50 @@ def check_query(knowledge , query):
     else:
         raise Exception("The knowledge is not valid")
 
-rain = Symbol("rain" , None , None)
-outside = Symbol("ouside" , None , None)
-die = Symbol("die" , None , None)
-run = Symbol("run" , None , None)
-cook = Symbol("cook" , None , None)
+mustard = Symbol("mustard" , None , None)
+plum = Symbol("plum" , None , None)
+scarlet = Symbol("scarlet" , None , None)
+ballroom = Symbol("ballroom" , None , None)
+kitchen = Symbol("kitchen" , None , None)
+library = Symbol("library" , None , None)
+knife = Symbol("knife" , None , None)
+revolver = Symbol("revolver" , None , None)
+wrench = Symbol("wrench" , None , None)
 
 
 kb = And(
-    Implicate(And(rain , outside) , die),
-    Implicate(run , outside),
-    rain,
-    Or(cook , run),
-    Not(And(cook , run)),
-    Not(cook)
+    Or(mustard , plum , scarlet),
+    Or(ballroom , kitchen , library),
+    Or(knife , revolver , wrench),
+    Not(mustard),
+    Not(kitchen),
+    Not(revolver),
+    Or(Not(scarlet) , Not(library) , Not(wrench)),
+    Not(plum),
+    Not(ballroom),
 )
 
-print(check_query(kb , die))
+valid_worlds = check_knowlege(kb)
+
+suspects = {
+    mustard : True,
+    plum : True,
+    scarlet : True,
+    ballroom : True,
+    library : True,
+    kitchen : True,
+    knife : True,
+    revolver : True,
+    wrench : True,
+}
+
+for world in valid_worlds:
+    for sym in world:
+        if sym[1]:
+            suspects[sym[0]] = suspects[sym[0]] and True
+        else:
+            suspects[sym[0]] = suspects[sym[0]] and False
+
+
+for key in suspects.keys():
+    print(key.name , suspects[key])
